@@ -48,4 +48,16 @@ interface ConfigurationInterface
         string $scopeType = ScopeInterface::SCOPE_STORE,
         $scopeCode = null
     ): array;
+
+    /**
+     * Returns configuration value for where to show paypal_ecs
+     *
+     * @param string $scopeType
+     * @param null|int|string $scopeCode
+     * @return array
+     */
+    public function getShowPayPalOn(
+        string $scopeType = ScopeInterface::SCOPE_STORE,
+               $scopeCode = null
+    ): array;
 }

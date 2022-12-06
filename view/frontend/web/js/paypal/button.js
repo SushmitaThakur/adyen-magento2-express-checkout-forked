@@ -92,8 +92,8 @@ define([
                             console.log('Required configuration for PayPal is missing');
                             return;
                         }
-                        // TODO!! -> create method
-                        // this.initialisePayPalComponent(paypalPaymentMethod, element);
+
+                        this.initialisePayPalComponent(paypalPaymentMethod, element);
                     }
                 }
             },
@@ -133,8 +133,8 @@ define([
                 if(!isConfigSet(paypalPaymentMethod, [/* TODO -> which values do I need here?*/])) {
                     return;
                 }
-                // TODO!! -> create method
-                //this.initialisePayPalComponent(paypalPaymentMethod, element);
+
+                this.initialisePayPalComponent(paypalPaymentMethod, element);
             },
 
             initialisePayPalComponent: async function (paypalPaymentMethod, element) {

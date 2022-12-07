@@ -63,7 +63,7 @@ define([
                shippingMethods: {},
                isProductView: false,
                maskedId: null,
-               paypalComponent: null
+               payPalComponent: null
             },
 
             initialize: async function (config, element) {
@@ -84,8 +84,7 @@ define([
                     if (!paypalPaymentMethod) {
                         const cart = customerData.get('cart');
                         cart.subscribe(function () {
-                            // TODO!! -> create method
-                            // this.reloadPayPalButton(element);
+                            this.reloadPayPalButton(element);
                         }.bind(this));
                     } else {
                         if(!isConfigSet(paypalPaymentMethod, [/* TODO!! */])) {
@@ -103,8 +102,7 @@ define([
                 const cart = customerData.get('cart');
 
                 cart.subscribe(function () {
-                    // TODO!! -> create a method for this
-                    //this.reloadPayPalButton(element);
+                    this.reloadPayPalButton(element);
                 }.bind(this));
 
                 setExpressMethods(res);
@@ -120,8 +118,7 @@ define([
 
                     isValid
                         .then(function () {
-                            // TODO!! -> create this method
-                            // this.reloadPayPalButton(element);
+                            this.reloadPayPalButton(element);
                         }.bind(this))
                         .catch(function (e) {
                             console.log(e);
@@ -151,16 +148,40 @@ define([
                 // TODO!! -> create method for getting the PP config
                 // const paypalConfiguration = this.getPayPalConfiguration(paypalPaymentMethod, element);
 
-                this.paypalComponent
+                this.payPalComponent
                     .isAvailable()
                     .then(() => {
-                        this.paypalComponent.mount(element);
+                        this.payPalComponent.mount(element);
                     }).catch(e => {
                         console.log('PayPal is unavailable', e)
                 })
 
-            }
+            },
 
-        })
+            reloadPayPalButton: async function (element) {
+                const paypalPaymentMethod = await getPaymentMethod('paypal_ecs', this.isProductView);
+
+                if (this.isProductView) {
+                    const res = await getExpressMethods().getRequest(element);
+
+                    setExpressMethods(res);
+                    totalsModel().setTotal(res.totals.grand_total);
+                }
+
+                this.unmountPayPal();
+
+                if (!isConfigSet(paypalPaymentMethod, [/* TODO!! -> figure out the required config values */])) {
+                    return;
+                }
+
+                this.initialisePayPalComponent;
+            },
+
+            unmountPayPal: function () {
+                if (this.payPalComponent) {
+                    this.payPalComponent.unmount();
+                }
+            }
+        });
     }
-    );
+);

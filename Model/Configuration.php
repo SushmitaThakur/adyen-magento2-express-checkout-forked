@@ -92,7 +92,7 @@ class Configuration implements ConfigurationInterface
                $scopeCode = null
     ): array {
         $value = $this->scopeConfig->getValue(
-            self::SHOW_GOOGLE_PAY_ON_CONFIG_PATH,
+            self::SHOW_PAYPAL_ON_CONFIG_PATH,
             $scopeType,
             $scopeCode
         );

@@ -24,6 +24,7 @@ interface ConfigurationInterface
 {
     public const SHOW_APPLE_PAY_ON_CONFIG_PATH = 'payment/adyen_hpp/show_apple_pay_on';
     public const SHOW_GOOGLE_PAY_ON_CONFIG_PATH = 'payment/adyen_hpp/show_google_pay_on';
+    public const SHOW_PAYPAL_ON_CONFIG_PATH = 'payment/adyen_hpp/show_paypal';
 
     /**
      * Returns configuration value for where to show apple pay

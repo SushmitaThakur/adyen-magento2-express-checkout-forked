@@ -32,12 +32,6 @@ define([
                 return paymentMethod.type === type;
             });
 
-            if (!found && 'googlepay' === type) {
-                found = paymentMethods.find(function (paymentMethod) {
-                    return paymentMethod.type === 'paywithgoogle';
-                });
-            }
-
             return found;
         }
 

@@ -57,7 +57,6 @@
             <argument name="expressMethodCodes" xsi:type="array">
                 <item name="applepay" xsi:type="string">applepay</item>
                 <item name="googlepay" xsi:type="string">googlepay</item>
-                <item name="googlepay_alt" xsi:type="string">paywithgoogle</item>
             </argument>
         </arguments>
     </type>

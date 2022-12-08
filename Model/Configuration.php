@@ -81,7 +81,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * Returns configuration value for where to show paypal_ecs
+     * Returns configuration value for where to show paypal
      *
      * @param string $scopeType
      * @param null|int|string $scopeCode

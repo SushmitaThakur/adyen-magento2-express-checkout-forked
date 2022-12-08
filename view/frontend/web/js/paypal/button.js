@@ -14,7 +14,7 @@ define([
     'Adyen_ExpressCheckout/js/helpers/formatCurrency',
     'Adyen_ExpressCheckout/js/helpers/getCartSubtotal',
     'Adyen_ExpressCheckout/js/helpers/getExtensionAttributes',
-    'Adyen_ExpressCheckout/js/helpers/getGooglePayStyles',
+    'Adyen_ExpressCheckout/js/helpers/getPayPalStyles',
     'Adyen_ExpressCheckout/js/helpers/getPaymentMethod',
     'Adyen_ExpressCheckout/js/helpers/getPdpForm',
     'Adyen_ExpressCheckout/js/helpers/getPdpPriceBox',
@@ -43,7 +43,7 @@ define([
         formatCurrency,
         getCartSubtotal,
         getExtensionAttributes,
-        getGooglePayStyles,
+        getPayPalStyles,
         getPaymentMethod,
         getPdpForm,
         getPdpPriceBox,
@@ -71,15 +71,14 @@ define([
 
                 configModel().setConfig(config);
                 countriesModel();
-
                 this.isProductView = config.isProductView;
 
                 // Set express methods if not set
                 if (this.isProductView) {
                     this.initializeOnPDP(config, element);
                 } else {
-                    // TODO!! -> check if paypal_ecs or paypal
-                    let paypalPaymentMethod = await getPaymentMethod('paypal_ecs', this.isProductView);
+                    debugger;
+                    let paypalPaymentMethod = await getPaymentMethod('paypal', this.isProductView);
 
                     if (!paypalPaymentMethod) {
                         const cart = customerData.get('cart');
@@ -87,7 +86,7 @@ define([
                             this.reloadPayPalButton(element);
                         }.bind(this));
                     } else {
-                        if(!isConfigSet(paypalPaymentMethod, [/* TODO!! */])) {
+                        if(!isConfigSet(paypalPaymentMethod)) {
                             console.log('Required configuration for PayPal is missing');
                             return;
                         }
@@ -127,7 +126,7 @@ define([
 
                 let paypalPaymentMethod = await getPaymentMethod('paypal', this.isProductView);
 
-                if(!isConfigSet(paypalPaymentMethod, [/* TODO -> which values do I need here?*/])) {
+                if(!isConfigSet(paypalPaymentMethod)) {
                     return;
                 }
 
@@ -142,11 +141,12 @@ define([
                     environment: config.checkoutenv,
                     risk: {
                         enabled: false
-                    }
-                    // TODO!! -> figure out whether clientKey is needed for PP
+                    },
+                    clientKey: config.clientKey
                 });
-                // TODO!! -> create method for getting the PP config
-                // const paypalConfiguration = this.getPayPalConfiguration(paypalPaymentMethod, element);
+                const payPalConfiguration = this.getPayPalConfig(paypalPaymentMethod, element);
+
+                this.payPalComponent = adyenCheckoutComponent.create('paypal', payPalConfiguration);
 
                 this.payPalComponent
                     .isAvailable()
@@ -155,11 +155,10 @@ define([
                     }).catch(e => {
                         console.log('PayPal is unavailable', e)
                 })
-
             },
 
             reloadPayPalButton: async function (element) {
-                const paypalPaymentMethod = await getPaymentMethod('paypal_ecs', this.isProductView);
+                const paypalPaymentMethod = await getPaymentMethod('paypal', this.isProductView);
 
                 if (this.isProductView) {
                     const res = await getExpressMethods().getRequest(element);
@@ -170,7 +169,7 @@ define([
 
                 this.unmountPayPal();
 
-                if (!isConfigSet(paypalPaymentMethod, [/* TODO!! -> figure out the required config values */])) {
+                if (!isConfigSet(paypalPaymentMethod)) {
                     return;
                 }
 
@@ -181,7 +180,104 @@ define([
                 if (this.payPalComponent) {
                     this.payPalComponent.unmount();
                 }
-            }
+            },
+
+            getPayPalConfig: function (paypalPaymentMethod, element) {
+                const payPalStyles = getPayPalStyles();
+                const config = configModel().getConfig();
+                const pdpForm = getPdpForm(element);
+                const countryCode = config.countryCode();
+
+                return {
+                    // amount: {
+                    //     value: this.isProductView
+                    //         ? formatAmount(totalsModel().getTotal() * 100)
+                    //         : formatAmount(getCartSubtotal() * 100),
+                    //     currency: config.currency
+                    // },
+                    // countryCode: countryCode,
+                    // onInit: this.onInit.bind(this),
+                    // onShippingChange: this.onShippingChange.bind(this),
+                    // onClick: (resolve, reject) => {
+                    //     validatePdpForm(resolve, reject, pdpForm);
+                    //     },
+                    // onSubmit: this.handleAction.bind(this),
+                    // onError: () => cancelCart(this.isProductView),
+                    // ...payPalStyles
+
+                    amount: {
+                        value: this.isProductView
+                            ? formatAmount(totalsModel().getTotal() * 100)
+                            : formatAmount(getCartSubtotal() * 100),
+                        currency: config.currency
+                    },
+                    showPayButton: true,
+                    countryCode: countryCode,
+                    onClick: () => {console.log('rok was here')},
+                    ...payPalStyles
+                }
+            },
+
+            // onShippingChange: function(data, actions) {
+            //     console.log("paypal data object:", data);
+            //
+            //     // // Reject non-GB addresses
+            //     // if (data.shipping_address.country_code !== 'GB') {
+            //     //     return actions.reject();
+            //     // };
+            //     //
+            //     // if (data.shipping_address.country_code == 'GB') {
+            //     //     console.log("Data:", data)
+            //     //     return actions.order.patch([
+            //     //         {
+            //     //             op: 'replace',
+            //     //             path: '/purchase_units/@reference_id==\'default\'/amount',
+            //     //             value: {
+            //     //                 currency_code: 'USD',
+            //     //                 value: '12.00',
+            //     //                 breakdown: {
+            //     //                     item_total: {
+            //     //                         currency_code: 'USD',
+            //     //                         value: '10.00'
+            //     //                     },
+            //     //                     shipping: {
+            //     //                         currency_code: 'USD',
+            //     //                         value: '1.00'
+            //     //                     },
+            //     //                     tax_total: {
+            //     //                         currency_code: 'USD',
+            //     //                         value: '1.00'
+            //     //                     }
+            //     //                 }
+            //     //             }
+            //     //         }
+            //     //     ]);
+            //     // }
+            // },
+
+            // onInit: function (data, actions) {
+            //     actions.enable(data);
+            // },
+
+            // handleAction: function(action, orderId) {
+            //     console.log('handle action', action);
+            //     // var self = this;
+            //     // let popupModal;
+            //     //
+            //     // fullScreenLoader.stopLoader();
+            //     //
+            //     // if (action.type === 'threeDS2' || action.type === 'await') {
+            //     //     popupModal = self.showModal();
+            //     // }
+            //     //
+            //     // try {
+            //     //     self.checkoutComponent.createFromAction(
+            //     //         action).mount('#' + this.modalLabel);
+            //     // } catch (e) {
+            //     //     console.log(e);
+            //     //     self.closeModal(popupModal);
+            //     // }
+            // }
         });
     }
 );

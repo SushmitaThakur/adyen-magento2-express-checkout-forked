@@ -16,7 +16,6 @@
         <policy id="img-src">
             <values>
                 <value id="google-static-img" type="host">https://*.gstatic.com</value>
-                <value id="paypal_ecs" type="host">*.paypal.com</value>
             </values>
         </policy>
 

@@ -24,7 +24,7 @@ interface ConfigurationInterface
 {
     public const SHOW_APPLE_PAY_ON_CONFIG_PATH = 'payment/adyen_hpp/show_apple_pay_on';
     public const SHOW_GOOGLE_PAY_ON_CONFIG_PATH = 'payment/adyen_hpp/show_google_pay_on';
-    public const SHOW_PAYPAL_ON_CONFIG_PATH = 'payment/adyen_hpp/show_paypal';
+    public const SHOW_PAYPAL_ON_CONFIG_PATH = 'payment/adyen_hpp/show_paypal_on';
 
     /**
      * Returns configuration value for where to show apple pay
@@ -51,7 +51,7 @@ interface ConfigurationInterface
     ): array;
 
     /**
-     * Returns configuration value for where to show paypal_ecs
+     * Returns configuration value for where to show paypal
      *
      * @param string $scopeType
      * @param null|int|string $scopeCode

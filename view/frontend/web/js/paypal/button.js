@@ -2,6 +2,7 @@ define([
     'uiComponent',
     'mage/translate',
     'Magento_Customer/js/customer-data',
+    'Adyen_Payment/js/model/adyen-configuration',
     'Adyen_Payment/js/adyen',
     'Adyen_ExpressCheckout/js/actions/activateCart',
     'Adyen_ExpressCheckout/js/actions/cancelCart',
@@ -31,6 +32,7 @@ define([
         Component,
         $t,
         customerData,
+        AdyenConfiguration,
         AdyenCheckout,
         activateCart,
         cancelCart,
@@ -134,19 +136,23 @@ define([
             },
 
             initialisePayPalComponent: async function (paypalPaymentMethod, element) {
+                debugger;
+
                 const config = configModel().getConfig();
                 const adyenCheckoutComponent = await new AdyenCheckout({
                     locale: config.locale,
-                    originKey: config.originKey,
+                    originKey: config.originkey,
                     environment: config.checkoutenv,
                     risk: {
                         enabled: false
                     },
-                    clientKey: config.clientKey
+                    clientKey: AdyenConfiguration.getClientKey()
                 });
                 const payPalConfiguration = this.getPayPalConfig(paypalPaymentMethod, element);
 
-                this.payPalComponent = adyenCheckoutComponent.create('paypal', payPalConfiguration);
+                this.payPalComponent = adyenCheckoutComponent.create(paypalPaymentMethod, payPalConfiguration);
+
+                console.log('komponenta', this.payPalComponent);
 
                 this.payPalComponent
                     .isAvailable()
@@ -186,25 +192,9 @@ define([
                 const payPalStyles = getPayPalStyles();
                 const config = configModel().getConfig();
                 const pdpForm = getPdpForm(element);
-                const countryCode = config.countryCode();
+                const countryCode = config.countryCode;
 
                 return {
-                    // amount: {
-                    //     value: this.isProductView
-                    //         ? formatAmount(totalsModel().getTotal() * 100)
-                    //         : formatAmount(getCartSubtotal() * 100),
-                    //     currency: config.currency
-                    // },
-                    // countryCode: countryCode,
-                    // onInit: this.onInit.bind(this),
-                    // onShippingChange: this.onShippingChange.bind(this),
-                    // onClick: (resolve, reject) => {
-                    //     validatePdpForm(resolve, reject, pdpForm);
-                    //     },
-                    // onSubmit: this.handleAction.bind(this),
-                    // onError: () => cancelCart(this.isProductView),
-                    // ...payPalStyles
-
                     amount: {
                         value: this.isProductView
                             ? formatAmount(totalsModel().getTotal() * 100)
@@ -213,7 +203,10 @@ define([
                     },
                     showPayButton: true,
                     countryCode: countryCode,
-                    onClick: () => {console.log('rok was here')},
+                    intent: paypalPaymentMethod.configuration.intent,
+                    merchantId: paypalPaymentMethod.configuration.merchantId,
+                    onInit: (data, actions) => actions.enable(data),
+                    onClick: (resolve, reject) => validatePdpForm(resolve, reject, pdpForm),
                     ...payPalStyles
                 }
             },

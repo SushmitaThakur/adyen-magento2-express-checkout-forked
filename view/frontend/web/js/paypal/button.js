@@ -7,6 +7,7 @@ define([
     'Adyen_ExpressCheckout/js/actions/activateCart',
     'Adyen_ExpressCheckout/js/actions/cancelCart',
     'Adyen_ExpressCheckout/js/actions/createPayment',
+    'Adyen_ExpressCheckout/js/actions/initPayPalPopup',
     'Adyen_ExpressCheckout/js/actions/getShippingMethods',
     'Adyen_ExpressCheckout/js/actions/getExpressMethods',
     'Adyen_ExpressCheckout/js/actions/setShippingInformation',
@@ -37,6 +38,7 @@ define([
         activateCart,
         cancelCart,
         createPayment,
+        initPayPalPopup,
         getShippingMethods,
         getExpressMethods,
         setShippingInformation,
@@ -148,19 +150,12 @@ define([
                     },
                     clientKey: AdyenConfiguration.getClientKey()
                 });
+
                 const payPalConfiguration = this.getPayPalConfig(paypalPaymentMethod, element);
 
                 this.payPalComponent = adyenCheckoutComponent.create(paypalPaymentMethod, payPalConfiguration);
 
-                console.log('komponenta', this.payPalComponent);
-
-                this.payPalComponent
-                    .isAvailable()
-                    .then(() => {
-                        this.payPalComponent.mount(element);
-                    }).catch(e => {
-                        console.log('PayPal is unavailable', e)
-                })
+                this.payPalComponent.mount(element)
             },
 
             reloadPayPalButton: async function (element) {
@@ -189,27 +184,99 @@ define([
             },
 
             getPayPalConfig: function (paypalPaymentMethod, element) {
+                debugger;
+                console.log('customer data: ', customerData);
                 const payPalStyles = getPayPalStyles();
                 const config = configModel().getConfig();
                 const pdpForm = getPdpForm(element);
                 const countryCode = config.countryCode;
 
                 return {
+                    // showPayButton: true,
                     amount: {
                         value: this.isProductView
                             ? formatAmount(totalsModel().getTotal() * 100)
                             : formatAmount(getCartSubtotal() * 100),
                         currency: config.currency
                     },
-                    showPayButton: true,
+                    // TODO => get all configuration from payment methods
+                    configuration: {
+                        intent: paypalPaymentMethod.configuration.intent,
+                        merchantId: paypalPaymentMethod.configuration.merchantId
+                    },
                     countryCode: countryCode,
-                    intent: paypalPaymentMethod.configuration.intent,
-                    merchantId: paypalPaymentMethod.configuration.merchantId,
-                    onInit: (data, actions) => actions.enable(data),
-                    onClick: (resolve, reject) => validatePdpForm(resolve, reject, pdpForm),
+                    // data: {
+                    //     personalDetails: {
+                    //         firstName: 'rok',
+                    //         lastName: 'popov ledinski',
+                    //         telephoneNumber: '0666666666',
+                    //         shopperEmail: 'rok@gmail.com',
+                    //         gender: 'MALE',
+                    //         dateOfBirth: '06-05-1990'
+                    //     },
+                    //     billingAddress: {
+                    //         city: 'Eefde',
+                    //         country: 'Netherlands',
+                    //         houseNumberOrName: '55',
+                    //         postalCode: '1019VM',
+                    //         street: 'Street'
+                    //     },
+                    //     shippingAddress: {
+                    //        city: 'Eefde',
+                    //        country: 'Netherlands',
+                    //        houseNumberOrName: '55',
+                    //        postalCode: '1019VM',
+                    //        street: 'Street'
+                    //     }
+                    // },
+                    // blockPayPalCreditButton: true,
+                    // blockPayPalPayLaterButton: true,
+                    // hasHolderName: AdyenConfiguration.getHasHolderName(),
+                    // holderNameRequired: AdyenConfiguration.getHasHolderName() &&
+                    //     AdyenConfiguration.getHolderNameRequired(),
+                    // onClick:
+                    // step 0
+                    // create a method and bind it here, that function should make a payment (createPayment.js => actions)
+                    onClick: () => this.initialisePayPalPopup(),
+                    // onError: () => cancelCart(this.isProductView),
                     ...payPalStyles
                 }
             },
+
+            initialisePayPalPopup: function () {
+                debugger;
+                let payload = {
+                    "amount": {
+                        "currency": "USD",
+                        "value": 1000
+                    },
+                    "reference": "1001",
+                    "paymentMethod": {
+                        "type": "paypal",
+                        "subtype": "sdk"
+                    },
+                    "returnUrl": "https://www.adyen.com/",
+                    "merchantAccount": "RokLedinski"
+                };
+
+                initPayPalPopup(JSON.stringify(payload), this.isProductView);
+               // NOTE 1
+               // - create a new API route in express module to call /payments on adyen
+               // - create payload:
+               //  {
+                //  amount: {
+                //      currency, value
+                //      },
+                //  reference (=merchantRef),
+                //  paymentMethod: {
+                //      type:paypal,
+                //      subtype:sdk
+                //  },
+                //  returnUrl,
+                //  merchantAccount
+                // }
+                // - send payload to newly created route
+            }
 
             // onShippingChange: function(data, actions) {
             //     console.log("paypal data object:", data);
@@ -252,8 +319,8 @@ define([
             //     actions.enable(data);
             // },
 
-            // handleAction: function(action, orderId) {
-            //     console.log('handle action', action);
+            // handleAction: function() {
+            //     console.log('handle action');
             //     // var self = this;
             //     // let popupModal;
             //     //
@@ -269,7 +336,7 @@ define([
             //     // } catch (e) {
             //     //     console.log(e);
             //     //     self.closeModal(popupModal);
-            //     // }
+            //     }
             // }
         });
     }

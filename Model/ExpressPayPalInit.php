@@ -5,7 +5,6 @@ namespace Adyen\ExpressCheckout\Model;
 
 use Adyen\ExpressCheckout\Api\ExpressPayPalInitInterface;
 use Adyen\Payment\Helper\Data;
-use phpDocumentor\Reflection\Types\Object_;
 
 class ExpressPayPalInit implements ExpressPayPalInitInterface
 {
@@ -15,32 +14,16 @@ class ExpressPayPalInit implements ExpressPayPalInitInterface
         $this->adyenDataHelper = $adyenDataHelper;
     }
     /**
-     * @return void
-     * @api
+     * @param string $payload
+     * @return mixed
      */
-    public function execute($payload): void
+    public function execute($payload)
     {
-//        $payload = array(
-//            "amount" => [
-//                "currency" => "USD",
-//                "value" => 1000
-//            ],
-//            "reference" => "1001",
-//            "paymentMethod" => [
-//                "type" => "paypal",
-//                "subtype" => "sdk"
-//            ],
-//            "returnUrl" => "https://www.adyen.com",
-//            "merchantAccount" => "RokLedinski"
-//        );
-
-        $pleaseWork = $payload;
-
-//        $objPayload = json_encode($payload);
-
-
         $client = $this->adyenDataHelper->initializeAdyenClient();
         $checkoutService = $this->adyenDataHelper->createAdyenCheckoutService($client);
-        $checkoutService->payments($payload);
+        $result = $checkoutService->payments(json_decode($payload, true));
+        return [
+          "response" => $result
+        ];
     }
 }

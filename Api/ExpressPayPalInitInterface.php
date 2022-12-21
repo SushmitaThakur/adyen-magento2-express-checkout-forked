@@ -6,12 +6,11 @@ namespace Adyen\ExpressCheckout\Api;
 interface ExpressPayPalInitInterface
 {
     /**
-     * Interface for performing an Adyen payments call
+     * Interface for calling /payments in Adyen
      *
-     * @param $payload
-     * @return void
+     * @param string $payload
+     * @return mixed
      * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @api
      */
-    public function execute($payload): void;
+    public function execute($payload);
 }

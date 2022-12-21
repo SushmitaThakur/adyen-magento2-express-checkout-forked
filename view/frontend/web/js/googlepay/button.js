@@ -25,7 +25,8 @@ define([
     'Adyen_ExpressCheckout/js/helpers/validatePdpForm',
     'Adyen_ExpressCheckout/js/model/config',
     'Adyen_ExpressCheckout/js/model/countries',
-    'Adyen_ExpressCheckout/js/model/totals'
+    'Adyen_ExpressCheckout/js/model/totals',
+    'Adyen_ExpressCheckout/js/model/currency'
 ],
     function (
         Component,
@@ -54,7 +55,8 @@ define([
         validatePdpForm,
         configModel,
         countriesModel,
-        totalsModel
+        totalsModel,
+        currencyModel
     ) {
         'use strict';
 
@@ -65,8 +67,7 @@ define([
                 googlePayAllowed: null,
                 isProductView: false,
                 maskedId: null,
-                googlePayComponent: null,
-                googlePayTxVariant: null
+                googlePayComponent: null
             },
 
             initialize: async function (config, element) {
@@ -112,6 +113,7 @@ define([
 
                 setExpressMethods(response);
                 totalsModel().setTotal(response.totals.grand_total);
+                currencyModel().setCurrency(response.totals.quote_currency_code)
 
                 const $priceBox = getPdpPriceBox();
                 const pdpForm = getPdpForm(element);
@@ -193,6 +195,16 @@ define([
                 const googlePayStyles = getGooglePayStyles();
                 const config = configModel().getConfig();
                 const pdpForm = getPdpForm(element);
+                let currency;
+
+                if (this.isProductView) {
+                    currency = currencyModel().getCurrency();
+                } else {
+                    const cartData =  customerData.get('cart');
+                    const adyenMethods = cartData()['adyen_payment_methods'];
+                    const paymentMethodExtraDetails = adyenMethods.paymentMethodsExtraDetails[googlePaymentMethod.type];
+                    currency = paymentMethodExtraDetails.configuration.amount.currency;
+                }
 
                 return {
                     showPayButton: true,
@@ -216,7 +228,7 @@ define([
                         totalPrice: this.isProductView
                             ? formatAmount(totalsModel().getTotal())
                             : formatAmount(getCartSubtotal()),
-                        currencyCode: config.currency
+                        currencyCode: currency
                     },
                     paymentDataCallbacks: {
                     onPaymentDataChanged: this.onPaymentDataChanged.bind(this)
@@ -225,7 +237,7 @@ define([
                     phoneNumberRequired: true,
                     configuration: {
                         gatewayMerchantId: googlePaymentMethod.configuration.gatewayMerchantId,
-                        merchantIdentifier: googlePaymentMethod.configuration.merchantId,
+                        merchantId: googlePaymentMethod.configuration.merchantId,
                         merchantName: config.merchantAccount
                     },
                     onAuthorized: this.startPlaceOrder.bind(this),
@@ -255,18 +267,6 @@ define([
                             return;
                         }
 
-                        const shippingMethods = response.map((shippingMethod) => {
-                            const label = shippingMethod.price_incl_tax
-                                ? formatCurrency(shippingMethod.price_incl_tax) + ' - ' + shippingMethod.method_title
-                                : shippingMethod.method_title;
-
-                            return {
-                                id: shippingMethod.method_code,
-                                label: label,
-                                description: shippingMethod.carrier_title
-                            };
-                        });
-
                         this.shippingMethods = response;
                         const selectedShipping = data.shippingOptionData.id === 'shipping_option_unselected'
                             ? response[0]
@@ -288,6 +288,18 @@ define([
 
                         setTotalsInfo(totalsPayload, this.isProductView)
                             .done(function (totals) {
+                                const shippingMethods = response.map((shippingMethod) => {
+                                    const label = shippingMethod.price_incl_tax
+                                        ? formatCurrency(shippingMethod.price_incl_tax, totals.quote_currency_code) + ' - ' + shippingMethod.method_title
+                                        : shippingMethod.method_title;
+
+                                    return {
+                                        id: shippingMethod.method_code,
+                                        label: label,
+                                        description: shippingMethod.carrier_title
+                                    };
+                                });
+
                                 const paymentDataRequestUpdate = {
                                     newShippingOptionParameters: {
                                         defaultSelectedOptionId: selectedShipping.method_code,
@@ -302,9 +314,9 @@ define([
                                                 status: 'FINAL'
                                             }
                                         ],
-                                        currencyCode: totals.base_currency_code,
+                                        currencyCode: totals.quote_currency_code,
                                         totalPriceStatus: 'FINAL',
-                                        totalPrice: totals.base_grand_total.toString(),
+                                        totalPrice: totals.grand_total.toString(),
                                         totalPriceLabel: 'Total',
                                         countryCode: configModel().getConfig().countryCode
                                     }
@@ -326,7 +338,7 @@ define([
                             paymentMethod: {
                                 googlePayCardNetwork: paymentData.paymentMethodData.info.cardNetwork,
                                 googlePayToken: paymentData.paymentMethodData.tokenizationData.token,
-                                type: self.googlePayTxVariant.type
+                                type: self.googlePayComponent.props.type
                             }
                         }),
                          payload = {
@@ -336,7 +348,7 @@ define([
                             paymentMethod: {
                                 method: 'adyen_hpp',
                                 additional_data: {
-                                    brand_code: self.googlePayTxVariant.type,
+                                    brand_code: self.googlePayComponent.props.type,
                                     stateData
                                 },
                                 extension_attributes: getExtensionAttributes(paymentData)

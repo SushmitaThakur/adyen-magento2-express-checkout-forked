@@ -23,7 +23,7 @@ class ExpressPayPalInit implements ExpressPayPalInitInterface
         $checkoutService = $this->adyenDataHelper->createAdyenCheckoutService($client);
         $result = $checkoutService->payments(json_decode($payload, true));
         return [
-          "response" => $result
+            "response" => $result
         ];
     }
 }

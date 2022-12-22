@@ -1,16 +1,16 @@
 define([
     'uiComponent',
+    'jquery',
     'mage/translate',
     'mage/storage',
     'Magento_Customer/js/customer-data',
     'Adyen_Payment/js/model/adyen-payment-service',
-    'Adyen_ExpressCheckout/js/helpers/getInternalApiUrl',
     'Adyen_Payment/js/model/adyen-configuration',
     'Adyen_Payment/js/adyen',
     'Adyen_ExpressCheckout/js/actions/activateCart',
     'Adyen_ExpressCheckout/js/actions/cancelCart',
     'Adyen_ExpressCheckout/js/actions/createPayment',
-    'Adyen_ExpressCheckout/js/actions/populatePayPalPopup',
+    'Adyen_ExpressCheckout/js/actions/getPayPalPopup',
     'Adyen_ExpressCheckout/js/actions/getShippingMethods',
     'Adyen_ExpressCheckout/js/actions/getExpressMethods',
     'Adyen_ExpressCheckout/js/actions/setShippingInformation',
@@ -34,17 +34,17 @@ define([
 ],
     function(
         Component,
+        $,
         $t,
         storage,
         customerData,
         adyenPaymentService,
-        getInternalUrl,
         AdyenConfiguration,
         AdyenCheckout,
         activateCart,
         cancelCart,
         createPayment,
-        initPayPalPopup,
+        getPayPalPopup,
         getShippingMethods,
         getExpressMethods,
         setShippingInformation,
@@ -152,12 +152,11 @@ define([
                     },
                     clientKey: AdyenConfiguration.getClientKey(),
                 });
-                debugger;
                 const payPalConfiguration = this.getPayPalConfig(paypalPaymentMethod, element);
 
-                this.payPalComponent = adyenCheckoutComponent.create(paypalPaymentMethod, payPalConfiguration);
-
-                this.payPalComponent.mount(element)
+                this.payPalComponent = adyenCheckoutComponent
+                    .create(paypalPaymentMethod, payPalConfiguration)
+                    .mount(element);
             },
 
             reloadPayPalButton: async function (element) {
@@ -234,94 +233,61 @@ define([
                     // hasHolderName: AdyenConfiguration.getHasHolderName(),
                     // holderNameRequired: AdyenConfiguration.getHasHolderName() &&
                     //     AdyenConfiguration.getHolderNameRequired(),
-                    // onClick:
-                    // step 0
-                    // create a method and bind it here, that function should make a payment (createPayment.js => actions)
-                    onClick: (state, component) => {
-                            let something = {
-                                amount: {
-                                    currency: 'EUR',
-                                    value: 1000
-                                },
-                                reference: '1001',
-                                paymentMethod: {
-                                    type: 'paypal',
-                                    subtype: 'sdk'
-                                },
-                                returnUrl: 'https://www.adyen.com',
-                                merchantAccount: 'RokLedinski'
-                            }
-
-                            let strPayload = JSON.stringify(something)
-
-                            let payload = {
-                                payload: strPayload,
-                            };
-
-                            storage.post(getInternalUrl('paypal-init', false), JSON.stringify(payload)).then((res, data) => {
-                                debugger;
-                                if (data === 'success') {
-                                    console.log(res[0]);
-                                    console.log('component: ', component);
-                                    if (res[0].action) {
-                                        component.handleAction(res[0].action);
-                                    }
-                                } else {
-                                    console.log(data);
-                                }
-                            })
-                                .catch(e => {
-                                    throw Error(e)
-                                });
-                    },
+                    onSubmit: (state, component) => this.populatePayPalPopup(state, component),
                     onAdditionalDetails: (state, component) => this.handleOnAdditionalDetails(state, component),
-                    // this is called when you first click the paypal yellow button
-                    // onError: () => cancelCart(this.isProductView),
+                    onError: () => cancelCart(this.isProductView),
                     ...payPalStyles
                 }
             },
 
-            // initialisePayPalPopup: function (state, component) {
-            //     let something = {
-            //         amount: {
-            //             currency: 'EUR',
-            //             value: 1000
-            //         },
-            //         reference: '1001',
-            //         paymentMethod: {
-            //             type: 'paypal',
-            //             subtype: 'sdk'
-            //         },
-            //         returnUrl: 'https://www.adyen.com',
-            //         merchantAccount: 'RokLedinski'
-            //     }
-            //
-            //     let strPayload = JSON.stringify(something)
-            //
-            //     let payload = {
-            //         payload: strPayload,
-            //         form_key: $.mage.cookies.get('form_key')
-            //     };
-            //
-            //     storage.post(getInternalUrl('paypal-init', false), JSON.stringify(payload)).then((res, data) => {
-            //         debugger;
-            //         if (data === 'success') {
-            //             console.log(res[0]);
-            //             console.log('component: ', component);
-            //             if (res[0].action) {
-            //                 component.handleAction(res[0].action);
-            //             }
-            //         } else {
-            //             console.log(data);
-            //         }
-            //     })
-            //         .catch(e => {
-            //             throw Error(e)
-            //         });
-            // },
+            populatePayPalPopup: function (state, component) {
+                let payload = {
+                    amount: {
+                        currency: 'EUR',
+                        value: 1000
+                    },
+                    reference: '1002',
+                    paymentMethod: {
+                        type: 'paypal',
+                        subtype: 'sdk'
+                    },
+                    returnUrl: 'https://www.adyen.com',
+                    merchantAccount: 'RokLedinski'
+                }
+
+                // debugger;
+                getPayPalPopup(JSON.stringify({
+                    payload: JSON.stringify(payload),
+                    form_key: $.mage.cookies.get('form_key')
+                }), this.isProductView)
+                    .then((res, data) => {
+                    if (data === 'success' && !!res[0].action) {
+                        component.handleAction(res[0].action);
+                    } else {
+                        console.log(data);
+                    }
+                })
+                    .catch(e => {
+                        throw Error(e)
+                    })
+            },
 
             handleOnAdditionalDetails: function (state, component) {
-                console.log('state: ', state);
+                // debugger;
+                let req = {};
+                if (!!state.data) {
+                    req = state.data;
+                }
+
+                req.orderID = state.data.details.orderID;
+
+                console.log('request: ', req);
+
+                adyenPaymentService.paymentDetails(req).done(function() {
+                    console.log('rok was here');
+                }).fail(function() {
+                    console.log('request failed')
+                })
             }
 
             // onShippingChange: function(data, actions) {

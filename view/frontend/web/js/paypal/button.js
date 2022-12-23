@@ -234,6 +234,7 @@ define([
                     // holderNameRequired: AdyenConfiguration.getHasHolderName() &&
                     //     AdyenConfiguration.getHolderNameRequired(),
                     onSubmit: (state, component) => this.populatePayPalPopup(state, component),
+                    onShippingChange: (data, actions) => this.handleOnShippingChange(data, actions),
                     onAdditionalDetails: (state, component) => this.handleOnAdditionalDetails(state, component),
                     onError: () => cancelCart(this.isProductView),
                     ...payPalStyles
@@ -271,15 +272,49 @@ define([
                         throw Error(e)
                     })
             },
+            handleOnShippingChange: function(data, actions) {
+                console.log('shipping data changed: ', data);
+                console.log('shipping actions: ', actions);
+                // TODO -> create a callback that will:
+                // - when the user changes the address within the paypal popup
+                // - get the first available shipping method from magento
+                // - calculate the updated order amount and feed that information to the popup
+                // - so the user will see the updated order amount when updating the delivery address
 
+                // return actions.order.patch([
+                //     {
+                //         op: 'replace',
+                //         path: '/purchase_units/@reference_id==\'default\'/amount',
+                //         value: {
+                //             currency_code: 'USD',
+                //             value: '12.00',
+                //             breakdown: {
+                //                 item_total: {
+                //                     currency_code: 'USD',
+                //                     value: '10.00'
+                //                 },
+                //                 shipping: {
+                //                     currency_code: 'USD',
+                //                     value: '1.00'
+                //                 },
+                //                 tax_total: {
+                //                     currency_code: 'USD',
+                //                     value: '1.00'
+                //                 }
+                //             }
+                //         }
+                //     }
+                // ]);
+            },
             handleOnAdditionalDetails: function (state, component) {
+
                 // debugger;
                 let req = {};
                 if (!!state.data) {
                     req = state.data;
                 }
 
-                req.orderID = state.data.details.orderID;
+                req.orderId = state.data.details.orderID;
 
                 console.log('request: ', req);
 
@@ -288,44 +323,7 @@ define([
                 }).fail(function() {
                     console.log('request failed')
                 })
-            }
-
-            // onShippingChange: function(data, actions) {
-            //     console.log("paypal data object:", data);
-            //
-            //     // // Reject non-GB addresses
-            //     // if (data.shipping_address.country_code !== 'GB') {
-            //     //     return actions.reject();
-            //     // };
-            //     //
-            //     // if (data.shipping_address.country_code == 'GB') {
-            //     //     console.log("Data:", data)
-            //     //     return actions.order.patch([
-            //     //         {
-            //     //             op: 'replace',
-            //     //             path: '/purchase_units/@reference_id==\'default\'/amount',
-            //     //             value: {
-            //     //                 currency_code: 'USD',
-            //     //                 value: '12.00',
-            //     //                 breakdown: {
-            //     //                     item_total: {
-            //     //                         currency_code: 'USD',
-            //     //                         value: '10.00'
-            //     //                     },
-            //     //                     shipping: {
-            //     //                         currency_code: 'USD',
-            //     //                         value: '1.00'
-            //     //                     },
-            //     //                     tax_total: {
-            //     //                         currency_code: 'USD',
-            //     //                         value: '1.00'
-            //     //                     }
-            //     //                 }
-            //     //             }
-            //     //         }
-            //     //     ]);
-            //     // }
-            // },
+            },
         });
     }
 );

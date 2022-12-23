@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace Adyen\ExpressCheckout\Model;
 
-use Adyen\ExpressCheckout\Api\ExpressPayPalInitInterface;
+use Adyen\ExpressCheckout\Api\ExpressPayPalPaymentDetailsInterface;
 use Adyen\Payment\Helper\Data;
 
-class ExpressPayPalInit implements ExpressPayPalInitInterface
+class ExpressPayPalPaymentDetails implements ExpressPayPalPaymentDetailsInterface
 {
     public function __construct(
         Data $adyenDataHelper
@@ -21,7 +21,7 @@ class ExpressPayPalInit implements ExpressPayPalInitInterface
     {
         $client = $this->adyenDataHelper->initializeAdyenClient();
         $checkoutService = $this->adyenDataHelper->createAdyenCheckoutService($client);
-        $result = $checkoutService->payments(json_decode($payload, true));
+        $result = $checkoutService->paymentsDetails(json_decode($payload, true));
         return [
             "response" => $result
         ];

@@ -59,9 +59,16 @@
             <resource ref="anonymous"/>
         </resources>
     </route>
-    <!-- Initialise PayPal Express Endpoint -->
-    <route url="/V1/adyen/express/paypal-init" method="POST">
-        <service class="Adyen\ExpressCheckout\Api\ExpressPayPalInitInterface" method="execute"/>
+    <!-- Express PayPal Payments Endpoint -->
+    <route url="/V1/adyen/express/paypal/payments" method="POST">
+        <service class="Adyen\ExpressCheckout\Api\ExpressPayPalPaymentsInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
+    <!-- Express PayPal PaymentDetails Endpoint -->
+    <route url="/V1/adyen/express/paypal/paymentDetails" method="POST">
+        <service class="Adyen\ExpressCheckout\Api\ExpressPayPalPaymentDetailsInterface" method="execute"/>
         <resources>
             <resource ref="anonymous" />
         </resources>

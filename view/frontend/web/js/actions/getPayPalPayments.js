@@ -6,7 +6,7 @@ define([
 
     return function (payload, isProductView) {
         return storage.post(
-            getExpressApi('paypal-init', isProductView),
+            getExpressApi('paypal/payments', isProductView),
             payload
         );
     };

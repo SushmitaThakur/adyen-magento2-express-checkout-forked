@@ -4,13 +4,13 @@ define([
     'mage/translate',
     'mage/storage',
     'Magento_Customer/js/customer-data',
-    'Adyen_Payment/js/model/adyen-payment-service',
     'Adyen_Payment/js/model/adyen-configuration',
     'Adyen_Payment/js/adyen',
     'Adyen_ExpressCheckout/js/actions/activateCart',
     'Adyen_ExpressCheckout/js/actions/cancelCart',
     'Adyen_ExpressCheckout/js/actions/createPayment',
-    'Adyen_ExpressCheckout/js/actions/getPayPalPopup',
+    'Adyen_ExpressCheckout/js/actions/getPayPalPayments',
+    'Adyen_ExpressCheckout/js/actions/getPayPalPaymentDetails',
     'Adyen_ExpressCheckout/js/actions/getShippingMethods',
     'Adyen_ExpressCheckout/js/actions/getExpressMethods',
     'Adyen_ExpressCheckout/js/actions/setShippingInformation',
@@ -38,13 +38,13 @@ define([
         $t,
         storage,
         customerData,
-        adyenPaymentService,
         AdyenConfiguration,
         AdyenCheckout,
         activateCart,
         cancelCart,
         createPayment,
-        getPayPalPopup,
+        getPayPalPayments,
+        getPayPalPaymentDetails,
         getShippingMethods,
         getExpressMethods,
         setShippingInformation,
@@ -256,8 +256,8 @@ define([
                     merchantAccount: 'RokLedinski'
                 }
 
-                // debugger;
-                getPayPalPopup(JSON.stringify({
+                debugger;
+                getPayPalPayments(JSON.stringify({
                     payload: JSON.stringify(payload),
                     form_key: $.mage.cookies.get('form_key')
                 }), this.isProductView)
@@ -307,22 +307,21 @@ define([
                 // ]);
             },
             handleOnAdditionalDetails: function (state, component) {
-
                 // debugger;
                 let req = {};
                 if (!!state.data) {
                     req = state.data;
                 }
-
                 req.orderId = state.data.details.orderID;
 
                 console.log('request: ', req);
 
-                adyenPaymentService.paymentDetails(req).done(function() {
-                    console.log('rok was here');
-                }).fail(function() {
-                    console.log('request failed')
-                })
+                getPayPalPaymentDetails(JSON.stringify({
+                    payload: JSON.stringify(req),
+                    form_key: $.mage.cookies.get('form_key')
+                }), this.isProductView)
+                    .done(() => console.log('rok was here'))
+                    .fail(() => console.log('it doesn\'t work'))
             },
         });
     }

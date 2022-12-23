@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Adyen\ExpressCheckout\Api;
 
-interface ExpressPayPalInitInterface
+interface ExpressPayPalPaymentsInterface
 {
     /**
      * Interface for calling /payments in Adyen

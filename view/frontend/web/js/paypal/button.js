@@ -4,6 +4,7 @@ define([
     'mage/translate',
     'mage/storage',
     'Magento_Customer/js/customer-data',
+    'Magento_Checkout/js/model/quote',
     'Adyen_Payment/js/model/adyen-configuration',
     'Adyen_Payment/js/adyen',
     'Adyen_ExpressCheckout/js/actions/activateCart',
@@ -38,6 +39,7 @@ define([
         $t,
         storage,
         customerData,
+        quote,
         AdyenConfiguration,
         AdyenCheckout,
         activateCart,
@@ -242,21 +244,26 @@ define([
             },
 
             populatePayPalPopup: function (state, component) {
+                // TODO get merchantReference dynamically
+                debugger;
+                const config = configModel().getConfig();
+
                 let payload = {
                     amount: {
-                        currency: 'EUR',
-                        value: 1000
+                        value: this.isProductView
+                            ? formatAmount(totalsModel().getTotal() * 100)
+                            : formatAmount(getCartSubtotal() * 100),
+                        currency: config.currency
                     },
-                    reference: '1002',
+                    reference: '1005',
                     paymentMethod: {
-                        type: 'paypal',
-                        subtype: 'sdk'
+                        type: state.data.paymentMethod.type,
+                        subtype: state.data.paymentMethod.subtype
                     },
-                    returnUrl: 'https://www.adyen.com',
-                    merchantAccount: 'RokLedinski'
+                    returnUrl: config.actionSuccess,
+                    merchantAccount: config.merchantAccount
                 }
 
-                debugger;
                 getPayPalPayments(JSON.stringify({
                     payload: JSON.stringify(payload),
                     form_key: $.mage.cookies.get('form_key')
@@ -308,19 +315,32 @@ define([
             },
             handleOnAdditionalDetails: function (state, component) {
                 // debugger;
+
                 let req = {};
                 if (!!state.data) {
                     req = state.data;
                 }
                 req.orderId = state.data.details.orderID;
 
-                console.log('request: ', req);
+                // TODO
+                // - make a call to internal endpoint which will use m2 quote interface -> Magento\Quote\Api\CartRepositoryInterface (model -> Magento/Quote/Model/QuoteRepository.php)
+                // - create a quote
+                // - retrieve ID, customer information (email, firstname, lastname), shipping methods, shipping address, billing address and send it to the frontend
+
 
                 getPayPalPaymentDetails(JSON.stringify({
                     payload: JSON.stringify(req),
                     form_key: $.mage.cookies.get('form_key')
                 }), this.isProductView)
-                    .done(() => console.log('rok was here'))
+                    .done((res) => {
+                            console.log('quote billing address: ', quote.billingAddress());
+                            console.log('quote shipping address: ', quote.shippingAddress());
+                            console.log(res);
+                        }
+                        // $.mage.redirect(
+                        //     window.checkoutConfig.payment[quote.paymentMethod().method].successPage
+                        // )}
+                    )
                     .fail(() => console.log('it doesn\'t work'))
             },
         });

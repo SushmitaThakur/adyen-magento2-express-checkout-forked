@@ -244,7 +244,6 @@ define([
             },
 
             populatePayPalPopup: function (state, component) {
-                // TODO get merchantReference dynamically
                 debugger;
                 const config = configModel().getConfig();
 
@@ -255,7 +254,6 @@ define([
                             : formatAmount(getCartSubtotal() * 100),
                         currency: config.currency
                     },
-                    reference: '1005',
                     paymentMethod: {
                         type: state.data.paymentMethod.type,
                         subtype: state.data.paymentMethod.subtype
@@ -314,17 +312,15 @@ define([
                 // ]);
             },
             handleOnAdditionalDetails: function (state, component) {
-                // debugger;
+                debugger;
 
                 let req = {};
                 if (!!state.data) {
                     req = state.data;
                 }
                 req.orderId = state.data.details.orderID;
-
-                // TODO
-                // - make a call to internal endpoint which will use m2 quote interface -> Magento\Quote\Api\CartRepositoryInterface (model -> Magento/Quote/Model/QuoteRepository.php)
-                // - create a quote
+                console.log('req: ', req);
+                // - create getQuote helper that will make a payments call to a new express API endpoint to retrieve the information about the quote and feed it to the frontend
                 // - retrieve ID, customer information (email, firstname, lastname), shipping methods, shipping address, billing address and send it to the frontend
 
 
@@ -333,6 +329,7 @@ define([
                     form_key: $.mage.cookies.get('form_key')
                 }), this.isProductView)
                     .done((res) => {
+                        // on a successful response, we need to create an order, but we don't have the information about the guest user -> or do we?
                             console.log('quote billing address: ', quote.billingAddress());
                             console.log('quote shipping address: ', quote.shippingAddress());
                             console.log(res);
